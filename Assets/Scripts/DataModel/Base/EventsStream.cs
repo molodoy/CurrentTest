@@ -10,7 +10,10 @@ namespace DataModel.Base
 
         public void Enqueue(Action action)
         {
-            _queue.Enqueue(action);
+            if (action != null)
+            {
+                _queue.Enqueue(action);
+            }
         }
 
         void IDisposable.Dispose()
