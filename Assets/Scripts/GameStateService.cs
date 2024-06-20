@@ -1,6 +1,8 @@
+using DataModel.Data;
+
 public class GameStateService
 {
-    private static readonly GameStateService _instance = new GameStateService();
+    private static readonly GameStateService _instance = new();
 
     public static GameStateService Get()
     {
@@ -9,12 +11,8 @@ public class GameStateService
 
     public GameState State { get; private set; }
 
-    public void Init(int coins, int stars)
+    public void Init(GameStateData stateData)
     {
-        State = new GameState()
-        {
-            Coins = coins,
-            Stars = stars
-        };
+        State = new(stateData);
     }
 }

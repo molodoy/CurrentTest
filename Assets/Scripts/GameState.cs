@@ -1,40 +1,33 @@
-using System;
+using DataModel.Base;
+using DataModel.Data;
+using DataModel.Interface;
 
 public class GameState
 {
-    private int _coins;
-
-    public event Action CoinsChanged = () => { };
-    public int Coins
+    private GameStateData _stateData;
+    
+    public GameState(GameStateData stateData)
     {
-        get => _coins;
-        set
-        {
-            var coins = _coins;
-            _coins = value;
-
-            if (value != coins)
-            {
-                CoinsChanged();
-            }
-        }
+        _stateData = stateData;
     }
 
-    private int _stars;
+    public IGameStateData Data => _stateData;
     
-    public event Action StarsChanged = () => { };
-    public int Stars
+    public GameStateData GetCopyThreadSafe()
     {
-        get => _stars;
-        set
+        GameStateData result;
+        lock (_stateData)
         {
-            var stars = _stars;
-            _stars = value;
-
-            if (value != stars)
-            {
-                StarsChanged();
-            }
+            result = new GameStateData(_stateData);
         }
+
+        return result;
+    }
+
+    public GameStateTransaction OpenModification()
+    {
+        GameStateData transactionData = GetCopyThreadSafe();
+        GameStateTransaction result = new GameStateTransaction(transactionData, _stateData);
+        return result;
     }
 }
