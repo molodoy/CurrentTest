@@ -1,6 +1,9 @@
+using DataModel.Base;
+using DataModel.Data;
+
 public class GameStateService
 {
-    private static readonly GameStateService _instance = new GameStateService();
+    private static readonly GameStateService _instance = new();
 
     public static GameStateService Get()
     {
@@ -11,10 +14,14 @@ public class GameStateService
 
     public void Init(int coins, int stars)
     {
-        State = new GameState()
+        EventStream eventStream = new EventStream();
+        GameStateData gameStateData = new GameStateData(eventStream)
         {
             Coins = coins,
             Stars = stars
         };
+        eventStream.Init(gameStateData);
+
+        State = new GameState(gameStateData, eventStream);
     }
 }

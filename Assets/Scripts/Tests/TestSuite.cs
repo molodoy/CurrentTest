@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using DataModel.Data;
+using DataModel.Interface;
+using NUnit.Framework;
 
 namespace Tests
 {
@@ -7,56 +9,89 @@ namespace Tests
         [Test]
         public void CanInitGameState()
         {
-            var gameStateService = GameStateService.Get();
-            gameStateService.Init(10,0);
+            GameStateService gameStateService = GameStateService.Get();
+            gameStateService.Init(10, 0);
 
-            var gameState = gameStateService.State;
-        
-            Assert.That(gameState.Coins, Is.EqualTo(10));
-            Assert.That(gameState.Stars, Is.EqualTo(0));
+            IGameStateData stateData = gameStateService.State.Data;
+            Assert.That(stateData.Coins, Is.EqualTo(10));
+            Assert.That(stateData.Stars, Is.EqualTo(0));
         }
 
         [Test]
         public void CanObserveGameStateChanges()
         {
-            var gameStateService = GameStateService.Get();
-            gameStateService.Init(10,0);
+            GameStateService gameStateService = GameStateService.Get();
+            gameStateService.Init(10, 0);
 
-            var gameState = gameStateService.State;
-            var stateObserverCalled = false;
-            gameState.CoinsChanged += () =>
+            int stateObserverCalled = 0;
+            void StateValidator()
             {
-                stateObserverCalled = true;
-                Assert.That(gameState.Coins, Is.EqualTo(8));
+                ++stateObserverCalled;
+
+                IGameStateData stateData = gameStateService.State.Data;
+                Assert.That(stateData.Coins, Is.EqualTo(8));
             };
+            
+            IGameStateData stateData = gameStateService.State.Data;
+            stateData.CoinsChanged += StateValidator;
             
             ShopService.Get().UseCoins(2);
 
-            Assert.That(stateObserverCalled, "Obsever not called");
+            Assert.That(stateObserverCalled, Is.EqualTo(1));
         }
     
         [Test]
         public void CanObserveConsistentGameStateChanges()
         {
-            var gameStateService = GameStateService.Get();
-            gameStateService.Init(10,0);
+            GameStateService gameStateService = GameStateService.Get();
+            gameStateService.Init(10, 0);
 
-            var stateObserverCalled = false;
+            int stateObserverCalled = 0;
             void StateValidator()
             {
-                stateObserverCalled = true;
-                var gameState = gameStateService.State;
-                Assert.That(gameState.Stars, Is.EqualTo(1));
-                Assert.That(gameState.Coins, Is.EqualTo(9));
+                ++stateObserverCalled;
+
+                IGameStateData stateData = gameStateService.State.Data;
+                Assert.That(stateData.Stars, Is.EqualTo(1));
+                Assert.That(stateData.Coins, Is.EqualTo(9));
             }
 
-            gameStateService.State.CoinsChanged += StateValidator;
-            gameStateService.State.StarsChanged += StateValidator;
+            IGameStateData stateData = gameStateService.State.Data;
+            stateData.CoinsChanged += StateValidator;
+            stateData.StarsChanged += StateValidator;
 
             var shopService = ShopService.Get();
             shopService.BuyStars(1, 1);
             
-            Assert.That(stateObserverCalled, "Obsever not called");
+            Assert.That(stateObserverCalled, Is.EqualTo(2));
+        }
+        
+        [Test]
+        public void CanObserveInventoryChanges()
+        {
+            var gameStateService = GameStateService.Get();
+            gameStateService.Init(10, 0);
+
+            int stateObserverCalled = 0;
+            void StateValidator()
+            {
+                ++stateObserverCalled;
+
+                IGameStateData stateData = gameStateService.State.Data;
+                Assert.That(stateData.Stars, Is.EqualTo(0));
+                Assert.That(stateData.Coins, Is.EqualTo(5));
+                Assert.That(stateData.Inventory.Items.Count, Is.EqualTo(1));
+            }
+
+            IGameStateData stateData = gameStateService.State.Data;
+            stateData.CoinsChanged += StateValidator;
+            stateData.StarsChanged += StateValidator;
+            stateData.Inventory.ItemsChanged += StateValidator;
+
+            var shopService = ShopService.Get();
+            shopService.BuyInventoryItem(0, "Booster", 5);
+            
+            Assert.That(stateObserverCalled, Is.EqualTo(2));
         }
     }
 }

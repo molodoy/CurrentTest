@@ -1,6 +1,6 @@
 public class ShopService
 {
-    private static readonly ShopService _instance = new ShopService();
+    private static readonly ShopService _instance = new();
 
     public static ShopService Get()
     {
@@ -9,12 +9,30 @@ public class ShopService
 
     public void BuyStars(int stars, int forCoins)
     {
-        GameStateService.Get().State.Stars += stars;
-        UseCoins(forCoins);
+        GameState gameState = GameStateService.Get().State;
+        gameState.Update(state =>
+        {
+            state.Stars += stars;
+            state.Coins -= forCoins;
+        });
     }
 
     public void UseCoins(int coins)
     {
-        GameStateService.Get().State.Coins -= coins;
+        GameState gameState = GameStateService.Get().State;
+        gameState.Update(state =>
+        {
+            state.Coins -= coins;
+        });
+    }
+
+    public void BuyInventoryItem(int itemId, string localizationId, int forCoins)
+    {
+        GameState gameState = GameStateService.Get().State;
+        gameState.Update(state =>
+        {
+            state.Inventory.AddItem(itemId, localizationId, 1);
+            state.Coins -= forCoins;
+        });
     }
 }
